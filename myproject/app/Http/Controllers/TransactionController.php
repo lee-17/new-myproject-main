@@ -56,7 +56,7 @@ class TransactionController extends Controller
         $validated = $request->validate([
             'member_id' => ['required', 'exists:members,id'],
             'membership_level_id' => ['required', 'exists:membership_levels,id'],
-            'type' => ['required', 'in:application,renewal'],
+            'type' => ['required', 'in:application,upgrade,renewal'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'effective_date' => ['nullable', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],

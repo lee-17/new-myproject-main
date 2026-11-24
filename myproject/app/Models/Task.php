@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Task extends Model
 {
@@ -15,6 +16,10 @@ class Task extends Model
         'task_title',
         'description',
         'completed',
+        'member_id',
+        'assigned_by',
+        'status',
+        'completed_at',
     ];
 
     /**
@@ -26,6 +31,17 @@ class Task extends Model
     {
         return [
             'completed' => 'boolean',
+            'completed_at' => 'datetime',
         ];
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
+    }
+
+    public function assigner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_by');
     }
 }

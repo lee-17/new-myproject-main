@@ -10,14 +10,18 @@ use Illuminate\Support\Str;
 class Member extends Model
 {
     protected $fillable = [
-        'membership_number', 'first_name', 'last_name', 'email', 'phone', 'address',
+        'user_id', 'membership_number', 'first_name', 'last_name', 'email', 'phone', 'address',
         'category', 'level', 'membership_category_id', 'membership_level_id',
-        'status', 'membership_expires_at',
+        'status', 'membership_expires_at', 'latitude', 'longitude',
     ];
 
     protected function casts(): array
     {
-        return ['membership_expires_at' => 'date'];
+        return [
+            'membership_expires_at' => 'date',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+        ];
     }
 
     protected static function booted(): void
@@ -39,6 +43,11 @@ class Member extends Model
         return $this->belongsTo(MembershipCategory::class, 'membership_category_id');
     }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function levelRelation(): BelongsTo
     {
         return $this->belongsTo(MembershipLevel::class, 'membership_level_id');
@@ -47,6 +56,11 @@ class Member extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(MembershipTransaction::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(Task::class);
     }
 
     private static function generateMembershipNumber(): string

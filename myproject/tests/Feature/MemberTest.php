@@ -2,9 +2,14 @@
 
 use App\Models\Member;
 use App\Models\MembershipLevel;
+use App\Models\User;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 
 uses(LazilyRefreshDatabase::class);
+
+beforeEach(function (): void {
+    $this->user = User::factory()->create();
+});
 
 test('members page can search by name, category, and level', function () {
     $member = Member::create([
@@ -16,7 +21,7 @@ test('members page can search by name, category, and level', function () {
         'status' => 'active',
     ]);
 
-    $response = $this->get(route('members.index', [
+    $response = $this->actingAs($this->user)->get(route('members.index', [
         'search' => 'Ana',
         'category' => 'Professional',
         'level' => 'Gold',
@@ -28,7 +33,7 @@ test('members page can search by name, category, and level', function () {
 test('a member can be registered', function () {
     MembershipLevel::create(['name' => 'Silver', 'fee' => 1000, 'validity_months' => 12]);
 
-    $response = $this->post(route('members.store'), [
+    $response = $this->actingAs($this->user)->post(route('members.store'), [
         'first_name' => 'Juan',
         'last_name' => 'Dela Cruz',
         'email' => 'juan@example.com',
@@ -53,7 +58,7 @@ test('a member can be deactivated', function () {
         'status' => 'active',
     ]);
 
-    $response = $this->patch(route('members.deactivate', $member));
+    $response = $this->actingAs($this->user)->patch(route('members.deactivate', $member));
 
     $response->assertRedirect();
     $this->assertDatabaseHas('members', ['id' => $member->id, 'status' => 'inactive']);

@@ -1,31 +1,17 @@
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>My Tasks</title>
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="task-page">
-        <main class="task-container">
-            <nav class="page-nav"><a class="active" href="{{ route('tasks.index') }}">Tasks</a><a href="{{ route('members.index') }}">Members</a></nav>
-            <header class="task-header"><p class="task-kicker">Laravel task manager</p><h1>My Tasks</h1><p class="task-intro">Add a task below and your saved tasks will appear here.</p></header>
-            @if (session('success'))<p class="success-message">{{ session('success') }}</p>@endif
-            <section class="task-card"><h2>Add a task</h2><form action="{{ route('tasks.store') }}" method="POST">
-                @csrf
-                <label for="task_title">Task title</label><input id="task_title" name="task_title" type="text" value="{{ old('task_title') }}" required>
-                @error('task_title')<p class="form-error">{{ $message }}</p>@enderror
-                <label for="description">Description</label><textarea id="description" name="description" rows="4">{{ old('description') }}</textarea>
-                @error('description')<p class="form-error">{{ $message }}</p>@enderror
-                <button type="submit">Add Task</button>
-            </form></section>
-            <section class="saved-tasks"><h2>Saved Tasks</h2>
-                @forelse ($tasks as $task)
-                    <article class="task-item"><h3>{{ $task->task_title }}</h3><p>{{ $task->description ?: 'No description provided.' }}</p><span>Status: {{ $task->completed ? 'Completed' : 'Not completed' }}</span></article>
-                @empty
-                    <p class="empty-message">No tasks have been added yet.</p>
-                @endforelse
-            </section>
-        </main>
-    </body>
-</html>
+@extends('layouts.app', ['title' => 'Learning Tasks'])
+
+@section('content')
+<section class="page-heading"><div><p class="eyebrow">Administrator workspace</p><h1>Learning tasks</h1><p class="page-subtitle">Assign activities to members, update instructions, and monitor completion.</p></div></section>
+
+<section class="form-panel"><div class="panel-heading"><div><p class="eyebrow">Create task</p><h2>Assign an activity</h2></div></div><form class="stack-form" action="{{ route('tasks.store') }}" method="POST">@csrf<div class="form-grid"><div><label for="task_title">Task title</label><input id="task_title" name="task_title" value="{{ old('task_title') }}" placeholder="e.g. Complete orientation" required></div><div><label for="member_id">Assign to member <span class="optional">(optional)</span></label><select id="member_id" name="member_id"><option value="">Administrator task</option>@foreach ($members as $member)<option value="{{ $member->id }}">{{ $member->full_name }} · {{ $member->email }}</option>@endforeach</select></div></div><div><label for="description">Instructions</label><textarea id="description" name="description" rows="4" placeholder="Write the activity instructions here.">{{ old('description') }}</textarea></div><div class="form-actions"><button class="primary-button" type="submit">Create task</button></div></form></section>
+
+<section class="panel filter-panel"><form class="filter-form" action="{{ route('tasks.index') }}" method="GET"><div><label for="status">Show tasks</label><select id="status" name="status"><option value="">All tasks</option><option value="pending" @selected($status === 'pending')>Pending</option><option value="completed" @selected($status === 'completed')>Completed</option></select></div><button class="secondary-button" type="submit">Apply filter</button></form></section>
+
+<section class="task-list">
+    @forelse ($tasks as $task)
+        <article class="task-item panel"><div class="task-item-heading"><div><span class="status-pill status-{{ $task->status }}">{{ ucfirst($task->status) }}</span><h2>{{ $task->task_title }}</h2></div><small>{{ $task->created_at->format('M j, Y') }}</small></div><p>{{ $task->description ?: 'No instructions provided.' }}</p><div class="task-assignee">Assigned to: <strong>{{ $task->member?->full_name ?? 'Administrator' }}</strong></div><div class="row-actions"><form action="{{ route('tasks.toggle', $task) }}" method="POST">@csrf @method('PATCH')<button class="icon-action" type="submit">{{ $task->completed ? 'Mark pending' : 'Mark complete' }}</button></form><form action="{{ route('tasks.destroy', $task) }}" method="POST" onsubmit="return confirm('Delete this task?')">@csrf @method('DELETE')<button class="icon-action danger-action" type="submit">Delete</button></form></div><details class="task-edit"><summary>Edit task</summary><form class="stack-form" action="{{ route('tasks.update', $task) }}" method="POST">@csrf @method('PATCH')<div class="form-grid"><div><label for="task_title_{{ $task->id }}">Task title</label><input id="task_title_{{ $task->id }}" name="task_title" value="{{ $task->task_title }}" required></div><div><label for="member_id_{{ $task->id }}">Assign to member</label><select id="member_id_{{ $task->id }}" name="member_id"><option value="">Administrator task</option>@foreach ($members as $member)<option value="{{ $member->id }}" @selected($task->member_id === $member->id)>{{ $member->full_name }}</option>@endforeach</select></div></div><label for="description_{{ $task->id }}">Instructions</label><textarea id="description_{{ $task->id }}" name="description" rows="3">{{ $task->description }}</textarea><button class="secondary-button" type="submit">Save changes</button></form></details></article>
+    @empty
+        <section class="panel empty-state"><span class="empty-icon">✦</span><h3>No tasks found</h3><p>Create an activity to see it here.</p></section>
+    @endforelse
+</section>
+@endsection

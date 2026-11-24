@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Member;
 use App\Models\MembershipCategory;
 use App\Models\MembershipLevel;
 use App\Models\User;
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
+            'role' => 'admin',
         ]);
 
         foreach ([
@@ -45,5 +47,32 @@ class DatabaseSeeder extends Seeder
         ] as $category) {
             MembershipCategory::updateOrCreate(['name' => $category['name']], $category);
         }
+
+        $memberUser = User::query()->updateOrCreate([
+            'email' => 'member@example.com',
+        ], [
+            'name' => 'Demo Member',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+            'role' => 'member',
+        ]);
+
+        $student = MembershipCategory::where('name', 'Student')->firstOrFail();
+        $basic = MembershipLevel::where('name', 'Basic')->firstOrFail();
+
+        Member::query()->updateOrCreate([
+            'email' => 'member@example.com',
+        ], [
+            'user_id' => $memberUser->id,
+            'first_name' => 'Demo',
+            'last_name' => 'Member',
+            'phone' => '09170000000',
+            'address' => 'MemberHub demo profile',
+            'category' => $student->name,
+            'level' => $basic->name,
+            'membership_category_id' => $student->id,
+            'membership_level_id' => $basic->id,
+            'status' => 'active',
+        ]);
     }
 }

@@ -5,8 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Member;
 use App\Models\MembershipCategory;
 use App\Models\MembershipLevel;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class MemberController extends Controller
@@ -90,6 +94,49 @@ class MemberController extends Controller
         $member->update(['status' => $member->status === 'active' ? 'inactive' : 'active']);
 
         return back()->with('success', $member->status === 'active' ? 'Member reactivated.' : 'Member deactivated.');
+    }
+
+    public function print(Member $member): View
+    {
+        $member->load(['categoryRelation', 'levelRelation', 'transactions.level', 'transactions.payments']);
+
+        return view('members.print', compact('member'));
+    }
+
+    public function createPortalLogin(Member $member): View
+    {
+        return view('members.portal-login', compact('member'));
+    }
+
+    public function storePortalLogin(Request $request, Member $member): RedirectResponse
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($member->user_id)],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        DB::transaction(function () use ($validated, $member): void {
+            $user = $member->user;
+
+            if ($user === null) {
+                $user = User::create([
+                    'name' => $member->full_name,
+                    'email' => $validated['email'],
+                    'password' => $validated['password'],
+                    'role' => 'member',
+                    'email_verified_at' => now(),
+                ]);
+                $member->update(['user_id' => $user->id]);
+            } else {
+                $user->update([
+                    'email' => $validated['email'],
+                    'password' => Hash::make($validated['password']),
+                    'role' => 'member',
+                ]);
+            }
+        });
+
+        return redirect()->route('members.show', $member)->with('success', 'Member portal login created. Share the credentials privately.');
     }
 
     /**
