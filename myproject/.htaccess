@@ -2,8 +2,14 @@
     RewriteEngine On
 
     # Keep uploaded/public storage files reachable without a symlink.
-    RewriteRule ^storage/(.*)$ /storage/app/public/$1 [END]
+    RewriteRule ^storage/(.*)$ public/storage/$1 [L]
 
-    # InfinityFree serves htdocs as the document root; Laravel serves from public.
-    RewriteRule ^(.*)$ /public/$1 [L]
+    # Serve Vite assets from Laravel's public directory.
+    RewriteRule ^build/(.*)$ public/build/$1 [L]
+    RewriteRule ^(favicon\.ico)$ public/$1 [L]
+
+    # Send application routes to Laravel's front controller.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ public/index.php [L]
 </IfModule>
