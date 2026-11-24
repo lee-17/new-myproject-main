@@ -1,0 +1,9 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Keep uploaded/public storage files reachable without a symlink.
+    RewriteRule ^storage/(.*)$ /storage/app/public/$1 [END]
+
+    # InfinityFree serves htdocs as the document root; Laravel serves from public.
+    RewriteRule ^(.*)$ /public/$1 [L]
+</IfModule>
